@@ -137,7 +137,15 @@ class JumputilsApp:
             self.root.after(0, self._report_finished, output_html)
             return
 
-        details = (completed.stderr or completed.stdout or "Unknown error").strip()
+        details = (completed.stderr or completed.stdout or "").strip()
+        if not details:
+            details = (
+                "The report process exited without a text error.\n\n"
+                f"Exit code: {completed.returncode}\n"
+                f"Python: {sys.executable}\n"
+                f"Project: {PROJECT_DIR}\n\n"
+                "This can indicate a native library problem or a missing input file."
+            )
         self.root.after(0, self._report_failed, details)
 
     def _report_finished(self, output_html: Path) -> None:
