@@ -1,0 +1,13 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11.15
+  - numpy=2.4.3
+  - pandas=3.0.2
+  - matplotlib=3.10.9
+  - ezc3d=1.7.0
+  - tk=8.6.15
+  - pip
+  - pip:
+      - scipy==1.17.1

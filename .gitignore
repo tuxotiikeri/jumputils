@@ -1,0 +1,18 @@
+# Recreated locally from environment.yml
+env/
+
+# Measurement data and generated reports stay outside Git
+data/*
+!data/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Local Python and editor files
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+
+# Previous development material is retained locally only
+vanha/
+jumputils/
