@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+from app.protocols.cmj import CMJConfig
 
 
 AXIS_INDEX = {"x": 0, "y": 1, "z": 2}
@@ -33,3 +34,4 @@ class Config:
     filter_hz: float = 15.0
     filter_order: int = 4
     body_mass_override: Optional[float] = None
+    cmj: CMJConfig = field(default_factory=CMJConfig)

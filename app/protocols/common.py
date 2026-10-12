@@ -4,6 +4,7 @@ import re
 from typing import List, Optional
 
 from app.protocols.dj import TRIAL_DJ
+from app.protocols.cmj import TRIAL_CMJ
 from app.protocols.sdj import TRIAL_SDJ_L, TRIAL_SDJ_R, TRIAL_SDJ30_L, TRIAL_SDJ30_R
 
 
@@ -22,6 +23,8 @@ def classify_trial(stem: str) -> Optional[str]:
     - SDJ30_L_1 / SDJ30_R_1     (single-leg drop jump, 30 cm platform)
     """
     compact = _compact_trial_name(stem)
+    if re.fullmatch(r'CMJ\d*', compact):
+        return TRIAL_CMJ
     if 'SDJ30L' in compact:
         return TRIAL_SDJ30_L
     if 'SDJ30R' in compact:
@@ -35,7 +38,7 @@ def classify_trial(stem: str) -> Optional[str]:
     return None
 
 def active_sides_for_trial(trial_type: str) -> List[str]:
-    if trial_type == TRIAL_DJ:
+    if trial_type in {TRIAL_DJ, TRIAL_CMJ}:
         return ['L', 'R']
     if trial_type in {TRIAL_SDJ_L, TRIAL_SDJ30_L}:
         return ['L']
@@ -53,6 +56,8 @@ def platform_cm_for_trial(trial_type: str) -> Optional[int]:
     return None
 
 def trial_family_label(trial_type: str) -> str:
+    if trial_type == TRIAL_CMJ:
+        return 'Countermovement Jump'
     if trial_type == TRIAL_DJ:
         return 'Drop Jump'
     if trial_type in {TRIAL_SDJ_L, TRIAL_SDJ_R}:
@@ -62,6 +67,8 @@ def trial_family_label(trial_type: str) -> str:
     return trial_type
 
 def contact_key_for_trial(trial_type: str) -> str:
+    if trial_type == TRIAL_CMJ:
+        raise ValueError('CMJ uses movement onset, COM bottom and take-off, not DJ contact windows')
     if trial_type == TRIAL_DJ:
         return 'combined'
     sides = active_sides_for_trial(trial_type)

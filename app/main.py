@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small desktop launcher for the Jumputils drop-jump report."""
+"""Folder launcher for separate DJ/SDJ and raw-force CMJ reports."""
 
 from __future__ import annotations
 
@@ -27,6 +27,16 @@ def safe_filename(value: str) -> str:
     return value.strip(" ._") or "measured_person"
 
 
+def session_reports(output_html: Path) -> list[Path]:
+    """Mixed sessions retain the DJ HTML and open the CMJ PDF separately."""
+    pdf = output_html.with_suffix('.pdf')
+    companion = output_html.with_name(output_html.stem+'_cmj.pdf')
+    reports = [pdf] if pdf.is_file() else ([output_html] if output_html.is_file() else [])
+    if companion.is_file():
+        reports.append(companion)
+    return reports
+
+
 class JumputilsApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -42,7 +52,7 @@ class JumputilsApp:
         frame.grid(sticky="nsew")
         frame.columnconfigure(0, weight=1)
 
-        ttk.Label(frame, text="Drop Jump report", font=("Segoe UI", 16, "bold")).grid(
+        ttk.Label(frame, text="Jump reports · DJ / SDJ / CMJ", font=("Segoe UI", 16, "bold")).grid(
             row=0, column=0, columnspan=2, sticky="w", pady=(0, 18)
         )
 
@@ -88,7 +98,7 @@ class JumputilsApp:
 
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y-%m-%d_%H%M")
-        stem = f"{safe_filename(subject)}_dropjump_{stamp}"
+        stem = f"{safe_filename(subject)}_jumps_{stamp}"
         output_html = REPORTS_DIR / f"{stem}.html"
         summary_csv = REPORTS_DIR / f"{stem}_summary.csv"
         contact_csv = REPORTS_DIR / f"{stem}_contact_phases.csv"
@@ -99,6 +109,10 @@ class JumputilsApp:
             "app.cli",
             str(folder),
             "--recursive",
+            "--cmj-report",
+            "performance",
+            "--cmj-force-source",
+            "csv",
             "--subject",
             subject,
             "--output",
@@ -133,8 +147,9 @@ class JumputilsApp:
             self.root.after(0, self._report_failed, str(exc))
             return
 
-        if completed.returncode == 0 and output_html.is_file():
-            self.root.after(0, self._report_finished, output_html)
+        if completed.returncode == 0 and session_reports(output_html):
+            warnings = completed.stdout.strip() if 'Warnings / skipped files:' in completed.stdout else ''
+            self.root.after(0, self._report_finished, output_html, warnings)
             return
 
         details = (completed.stderr or completed.stdout or "").strip()
@@ -148,11 +163,17 @@ class JumputilsApp:
             )
         self.root.after(0, self._report_failed, details)
 
-    def _report_finished(self, output_html: Path) -> None:
+    def _report_finished(self, output_html: Path, warnings: str = '') -> None:
+        reports = session_reports(output_html)
         self.create_button.configure(state="normal")
-        self.status_var.set(f"Report created: {output_html}")
-        webbrowser.open(output_html.resolve().as_uri())
-        messagebox.showinfo("Report created", f"The report was saved to:\n{output_html}")
+        self.status_var.set(f"Created {len(reports)} report(s) in {output_html.parent}")
+        for report in reports:
+            webbrowser.open(report.resolve().as_uri())
+        details = 'Reports saved to:\n'+'\n'.join(str(p) for p in reports)
+        if warnings:
+            messagebox.showwarning('Reports created with analysis notes', details+'\n\n'+warnings[-3000:])
+        else:
+            messagebox.showinfo('Reports created', details)
 
     def _report_failed(self, details: str) -> None:
         self.create_button.configure(state="normal")

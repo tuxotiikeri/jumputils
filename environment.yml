@@ -11,3 +11,4 @@ dependencies:
   - pip
   - pip:
       - scipy==1.17.1
+      - reportlab==4.4.10

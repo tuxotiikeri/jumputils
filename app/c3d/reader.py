@@ -17,8 +17,9 @@ from app.c3d.labels import find_matching_label, normalize_label
 
 
 def scan_trial_files(folder: Path, recursive: bool = False) -> List[Path]:
-    files = folder.rglob('*.c3d') if recursive else folder.glob('*.c3d')
-    return sorted([p for p in files if classify_trial(p.stem) is not None])
+    files = folder.rglob('*') if recursive else folder.glob('*')
+    return sorted([p for p in files if p.is_file() and p.suffix.lower() == '.c3d'
+                   and classify_trial(p.stem) is not None])
 
 def get_value_or_default(container: Dict[str, Any], keys: Sequence[str], default: float) -> float:
     for key in keys:
